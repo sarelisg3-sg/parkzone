@@ -73,7 +73,7 @@ export function HomeScreen({
             className="absolute left-1/2 top-[57%] h-9 w-9 -translate-x-1/2 fill-white text-brand-800"
             strokeWidth={2}
           />
-          <div className="absolute left-1/2 top-[46%] w-[68%] -translate-x-1/2 -translate-y-full pb-2">
+          <div className="absolute left-1/2 top-[57%] w-[68%] -translate-x-1/2 -translate-y-full pb-2">
             <div className="rounded-[var(--ds-radius-lg)] bg-brand-800/95 px-5 py-4 text-center text-white shadow-[var(--ds-shadow-lg)]">
               <p className="text-[length:var(--ds-text-base)]">
                 Parquímetro <span className="font-bold">{session.meterId}</span>
