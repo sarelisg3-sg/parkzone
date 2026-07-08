@@ -25,10 +25,12 @@ import {
   ConfigurarVehiculoScreen,
   PagosMenuScreen,
   MetodosDePagoScreen,
+  DetalleTarjetaScreen,
   AgregarTarjetaScreen,
   SaldoScreen,
   HistorialScreen,
 } from "@/components/screens/account";
+import { AccountMenu } from "@/components/shell/AccountMenu";
 
 const NAVLESS_SCREENS: Screen[] = [
   "welcome",
@@ -87,14 +89,24 @@ export function ParkzoneApp() {
     ),
     home: (
       <HomeScreen
+        session={state.session}
         onEstacionar={() => {
           dispatch({ type: "SET_PENDING_MINUTES", minutes: 0, extend: false });
           go("meterDetected");
         }}
+        onAgregarTiempo={() => {
+          dispatch({ type: "SET_PENDING_MINUTES", minutes: 0, extend: true });
+          go("agregarTiempo");
+        }}
+        onMenu={() => dispatch({ type: "SET_MENU_OPEN", open: true })}
       />
     ),
     meterDetected: (
-      <MeterDetectedScreen onBack={() => go("home")} onSelect={() => go("parametros")} />
+      <MeterDetectedScreen
+        onBack={() => go("home")}
+        onSelect={() => go("parametros")}
+        onMenu={() => dispatch({ type: "SET_MENU_OPEN", open: true })}
+      />
     ),
     parametros: (
       <ParametrosScreen
@@ -107,6 +119,7 @@ export function ParkzoneApp() {
         onConfirm={() => dispatch({ type: "CONFIRM_PARAMETROS" })}
         onCancel={() => go("home")}
         onBack={() => go("meterDetected")}
+        onCambiarVehiculo={() => dispatch({ type: "GO_CONFIGURAR_VEHICULO", from: "parametros" })}
       />
     ),
     pago: (
@@ -116,12 +129,13 @@ export function ParkzoneApp() {
         onPay={() => dispatch({ type: "PAY" })}
         onCancel={() => go("home")}
         onBack={() => go(state.extendMode ? "agregarTiempo" : "parametros")}
-        onAddCard={() => go("agregarTarjeta")}
+        onAddCard={() => dispatch({ type: "GO_AGREGAR_TARJETA", from: "pago" })}
+        onCardClick={() => dispatch({ type: "GO_DETALLE_TARJETA", from: "pago" })}
       />
     ),
     paySuccess: (
       <PaySuccessScreen
-        onDone={() => dispatch({ type: "SET_TAB", tab: "estado" })}
+        onDone={() => dispatch({ type: "SET_TAB", tab: "inicio" })}
       />
     ),
     estado: (
@@ -151,12 +165,13 @@ export function ParkzoneApp() {
         onConfirm={() => dispatch({ type: "PAY" })}
         onCancel={() => go("estado")}
         onBack={() => go("estado")}
+        onCambiarVehiculo={() => dispatch({ type: "GO_CONFIGURAR_VEHICULO", from: "agregarTiempo" })}
       />
     ),
     perfil: (
       <PerfilScreen
         nombre={state.profile.nombre || "María"}
-        onConfigurarVehiculo={() => go("configurarVehiculo")}
+        onConfigurarVehiculo={() => dispatch({ type: "GO_CONFIGURAR_VEHICULO", from: "perfil" })}
         onMetodosDePago={() => go("metodosDePago")}
         onLogout={() => dispatch({ type: "LOGOUT" })}
       />
@@ -166,9 +181,9 @@ export function ParkzoneApp() {
         vehiculo={state.vehiculo}
         onSave={(vehiculo) => {
           dispatch({ type: "SET_VEHICULO", vehiculo });
-          go("perfil");
+          go(state.vehiculoReturn);
         }}
-        onBack={() => go("perfil")}
+        onBack={() => go(state.vehiculoReturn)}
       />
     ),
     pagosMenu: (
@@ -181,17 +196,21 @@ export function ParkzoneApp() {
     metodosDePago: (
       <MetodosDePagoScreen
         tarjeta={state.tarjeta}
-        onAddCard={() => go("agregarTarjeta")}
+        onAddCard={() => dispatch({ type: "GO_AGREGAR_TARJETA", from: "metodosDePago" })}
+        onCardClick={() => dispatch({ type: "GO_DETALLE_TARJETA", from: "metodosDePago" })}
         onBack={() => go("pagosMenu")}
       />
+    ),
+    detalleTarjeta: (
+      <DetalleTarjetaScreen tarjeta={state.tarjeta} onBack={() => go(state.tarjetaReturn)} />
     ),
     agregarTarjeta: (
       <AgregarTarjetaScreen
         onRegister={(tarjeta) => {
           dispatch({ type: "SET_TARJETA", tarjeta });
-          go("metodosDePago");
+          go(state.tarjetaReturn);
         }}
-        onBack={() => go("metodosDePago")}
+        onBack={() => go(state.tarjetaReturn)}
       />
     ),
     saldo: <SaldoScreen saldo={state.saldo} onBack={() => go("pagosMenu")} />,
@@ -203,7 +222,7 @@ export function ParkzoneApp() {
   const showNav = !NAVLESS_SCREENS.includes(state.screen);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
       <div className="min-h-0 flex-1 overflow-hidden">{screens[state.screen]}</div>
       {showNav && (
         <BottomNav
@@ -211,6 +230,14 @@ export function ParkzoneApp() {
           onChange={(tab) => dispatch({ type: "SET_TAB", tab })}
         />
       )}
+      <AccountMenu
+        open={state.menuOpen}
+        nombre={state.profile.nombre || "María"}
+        onClose={() => dispatch({ type: "SET_MENU_OPEN", open: false })}
+        onConfigurarVehiculo={() => dispatch({ type: "GO_CONFIGURAR_VEHICULO", from: "home" })}
+        onMetodosDePago={() => go("metodosDePago")}
+        onLogout={() => dispatch({ type: "LOGOUT" })}
+      />
     </div>
   );
 }

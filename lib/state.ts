@@ -17,6 +17,7 @@ export type Screen =
   | "configurarVehiculo"
   | "pagosMenu"
   | "metodosDePago"
+  | "detalleTarjeta"
   | "agregarTarjeta"
   | "saldo"
   | "historial";
@@ -52,6 +53,9 @@ export interface AppState {
   pendingMinutes: number; // time picker selection in progress
   session: ParkingSession | null;
   extendMode: boolean; // true when the time picker is being used to add time to an existing session
+  vehiculoReturn: Screen; // where ConfigurarVehiculoScreen sends you back after saving
+  tarjetaReturn: Screen; // where AgregarTarjetaScreen/detail send you back
+  menuOpen: boolean;
 }
 
 export const METER = {
@@ -72,10 +76,17 @@ export const initialState: AppState = {
   pendingMinutes: 0,
   session: null,
   extendMode: false,
+  vehiculoReturn: "perfil",
+  tarjetaReturn: "metodosDePago",
+  menuOpen: false,
 };
 
 export type Action =
   | { type: "GO"; screen: Screen }
+  | { type: "GO_CONFIGURAR_VEHICULO"; from: Screen }
+  | { type: "GO_AGREGAR_TARJETA"; from: Screen }
+  | { type: "GO_DETALLE_TARJETA"; from: Screen }
+  | { type: "SET_MENU_OPEN"; open: boolean }
   | { type: "SET_TAB"; tab: BottomTab }
   | { type: "SIGNUP_PROFILE"; nombre: string; apellidos: string; correo: string }
   | { type: "SIGNUP_VEHICULO"; vehiculo: Vehiculo }
@@ -93,6 +104,14 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "GO":
       return { ...state, screen: action.screen };
+    case "GO_CONFIGURAR_VEHICULO":
+      return { ...state, screen: "configurarVehiculo", vehiculoReturn: action.from };
+    case "GO_AGREGAR_TARJETA":
+      return { ...state, screen: "agregarTarjeta", tarjetaReturn: action.from };
+    case "GO_DETALLE_TARJETA":
+      return { ...state, screen: "detalleTarjeta", tarjetaReturn: action.from };
+    case "SET_MENU_OPEN":
+      return { ...state, menuOpen: action.open };
     case "SET_TAB": {
       const screenByTab: Record<BottomTab, Screen> = {
         inicio: "home",

@@ -8,6 +8,31 @@ import { Header } from "@/components/shell/Header";
 import { primaryBtn, accentBtn } from "@/components/screens/auth";
 import { METER, computeTotal, type ParkingSession, type Vehiculo } from "@/lib/state";
 
+function formatDuration(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60);
+  const m = Math.round(totalMinutes % 60);
+  if (h === 0) return `${m} minutos`;
+  if (m === 0) return `${h} ${h === 1 ? "hora" : "horas"}`;
+  return `${h} ${h === 1 ? "hora" : "horas"} ${m} minutos`;
+}
+
+function useRemainingTime(session: ParkingSession | null) {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [session]);
+
+  if (!session) return { remainingMinutes: 0, endsAt: null };
+  const remainingMinutes =
+    now === null
+      ? session.durationMinutes
+      : Math.max(0, (session.startedAt + session.durationMinutes * 60_000 - now) / 60_000);
+  const endsAt = new Date(session.startedAt + session.durationMinutes * 60_000);
+  return { remainingMinutes, endsAt };
+}
+
 const money = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -26,10 +51,62 @@ function MapCanvas({ children }: { children?: React.ReactNode }) {
   );
 }
 
-export function HomeScreen({ onEstacionar }: { onEstacionar: () => void }) {
+export function HomeScreen({
+  session,
+  onEstacionar,
+  onAgregarTiempo,
+  onMenu,
+}: {
+  session: ParkingSession | null;
+  onEstacionar: () => void;
+  onAgregarTiempo: () => void;
+  onMenu: () => void;
+}) {
+  const { remainingMinutes, endsAt } = useRemainingTime(session);
+
+  if (session) {
+    return (
+      <div className="flex h-full flex-col bg-neutral-50">
+        <Header title="Estacionamiento" onMenu={onMenu} />
+        <MapCanvas>
+          <MapPin
+            className="absolute left-1/2 top-[57%] h-9 w-9 -translate-x-1/2 fill-white text-brand-800"
+            strokeWidth={2}
+          />
+          <div className="absolute left-1/2 top-[46%] w-[68%] -translate-x-1/2 -translate-y-full pb-2">
+            <div className="rounded-[var(--ds-radius-lg)] bg-brand-800/95 px-5 py-4 text-center text-white shadow-[var(--ds-shadow-lg)]">
+              <p className="text-[length:var(--ds-text-base)]">
+                Parquímetro <span className="font-bold">{session.meterId}</span>
+              </p>
+              <p className="mt-2 text-[length:var(--ds-text-sm)]">
+                <span className="font-bold">Tiempo:</span> {formatDuration(remainingMinutes)}
+              </p>
+              <p className="text-[length:var(--ds-text-sm)]">
+                <span className="font-bold">Termina:</span>{" "}
+                {endsAt!.toLocaleTimeString("es-MX", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </p>
+              <button
+                onClick={onAgregarTiempo}
+                className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[var(--ds-radius-md)] bg-white/25 py-2 text-[length:var(--ds-text-base)] text-white transition-colors hover:bg-white/35"
+              >
+                <Clock className="h-4 w-4" strokeWidth={2} />
+                Añadir tiempo
+              </button>
+            </div>
+            <div className="mx-auto h-0 w-0 border-x-[10px] border-t-[10px] border-x-transparent border-t-brand-800/95" />
+          </div>
+        </MapCanvas>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col bg-neutral-50">
-      <Header title="¡Comencemos!" />
+      <Header title="¡Comencemos!" onMenu={onMenu} />
       <MapCanvas>
         <button
           onClick={onEstacionar}
@@ -45,21 +122,23 @@ export function HomeScreen({ onEstacionar }: { onEstacionar: () => void }) {
 export function MeterDetectedScreen({
   onBack,
   onSelect,
+  onMenu,
 }: {
   onBack: () => void;
   onSelect: () => void;
+  onMenu: () => void;
 }) {
   return (
     <div className="flex h-full flex-col bg-neutral-50">
-      <Header title="Parquímetro" onBack={onBack} />
+      <Header title="Parquímetro" onBack={onBack} onMenu={onMenu} />
       <MapCanvas>
         {/* pin */}
         <MapPin
           className="absolute left-1/2 top-[57%] h-9 w-9 -translate-x-1/2 fill-white text-brand-800"
           strokeWidth={2}
         />
-        {/* tooltip card */}
-        <div className="absolute left-1/2 top-[18%] w-[68%] -translate-x-1/2">
+        {/* tooltip card, anchored directly above the pin */}
+        <div className="absolute left-1/2 top-[57%] w-[68%] -translate-x-1/2 -translate-y-full pb-2">
           <div className="rounded-[var(--ds-radius-lg)] bg-brand-800/95 px-5 py-4 text-center text-white shadow-[var(--ds-shadow-lg)]">
             <p className="text-[length:var(--ds-text-base)]">
               Parquímetro <span className="font-bold">{METER.id}</span>
@@ -94,6 +173,7 @@ export function ParametrosScreen({
   onConfirm,
   onCancel,
   onBack,
+  onCambiarVehiculo,
 }: {
   title: string;
   minutes: number;
@@ -102,6 +182,7 @@ export function ParametrosScreen({
   onConfirm: () => void;
   onCancel: () => void;
   onBack: () => void;
+  onCambiarVehiculo: () => void;
 }) {
   return (
     <div className="flex h-full flex-col bg-neutral-50">
@@ -133,9 +214,12 @@ export function ParametrosScreen({
             </dt>
             <dd className="flex flex-1 items-center justify-between text-[length:var(--ds-text-md)] text-brand-800">
               {vehiculo.placa}
-              <span className="rounded-[var(--ds-radius-md)] border border-brand-800 px-3 py-1 text-[length:var(--ds-text-xs)]">
+              <button
+                onClick={onCambiarVehiculo}
+                className="cursor-pointer rounded-[var(--ds-radius-md)] border border-brand-800 px-3 py-1 text-[length:var(--ds-text-xs)] transition-colors hover:bg-brand-800 hover:text-white"
+              >
                 Cambiar
-              </span>
+              </button>
             </dd>
           </div>
         </dl>
@@ -166,6 +250,7 @@ export function PagoScreen({
   onCancel,
   onBack,
   onAddCard,
+  onCardClick,
 }: {
   total: number;
   tarjeta: { last4: string; name: string };
@@ -173,6 +258,7 @@ export function PagoScreen({
   onCancel: () => void;
   onBack: () => void;
   onAddCard: () => void;
+  onCardClick: () => void;
 }) {
   return (
     <div className="flex h-full flex-col bg-neutral-50">
@@ -197,7 +283,10 @@ export function PagoScreen({
         <p className="mt-4 text-[length:var(--ds-text-sm)] text-neutral-700">
           Tarjeta de crédito
         </p>
-        <button className="mt-2 flex w-full cursor-pointer items-center justify-between rounded-[var(--ds-radius-md)] bg-pz-accent px-4 py-2.5 text-white transition-colors hover:bg-pz-accent-hover">
+        <button
+          onClick={onCardClick}
+          className="mt-2 flex w-full cursor-pointer items-center justify-between rounded-[var(--ds-radius-md)] bg-pz-accent px-4 py-2.5 text-white transition-colors hover:bg-pz-accent-hover"
+        >
           <span className="flex items-center gap-3 text-[length:var(--ds-text-sm)]">
             <CardIcon />
             {tarjeta.last4} - {tarjeta.name}
@@ -257,14 +346,6 @@ export function PaySuccessScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
-function formatDuration(totalMinutes: number): string {
-  const h = Math.floor(totalMinutes / 60);
-  const m = Math.round(totalMinutes % 60);
-  if (h === 0) return `${m} minutos`;
-  if (m === 0) return `${h} ${h === 1 ? "hora" : "horas"}`;
-  return `${h} ${h === 1 ? "hora" : "horas"} ${m} minutos`;
-}
-
 export function EstadoScreen({
   session,
   vehiculo,
@@ -280,25 +361,7 @@ export function EstadoScreen({
   onConfirm: () => void;
   onBack: () => void;
 }) {
-  // Clock state so the remaining time ticks live (kept out of render for purity)
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    if (!session) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [session]);
-
-  const remainingMinutes = session
-    ? now === null
-      ? session.durationMinutes
-      : Math.max(
-          0,
-          (session.startedAt + session.durationMinutes * 60_000 - now) / 60_000
-        )
-    : 0;
-  const endsAt = session
-    ? new Date(session.startedAt + session.durationMinutes * 60_000)
-    : null;
+  const { remainingMinutes, endsAt } = useRemainingTime(session);
 
   return (
     <div className="flex h-full flex-col bg-neutral-50">

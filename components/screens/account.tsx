@@ -148,10 +148,12 @@ export function PagosMenuScreen({
 export function MetodosDePagoScreen({
   tarjeta,
   onAddCard,
+  onCardClick,
   onBack,
 }: {
   tarjeta: Tarjeta;
   onAddCard: () => void;
+  onCardClick: () => void;
   onBack: () => void;
 }) {
   return (
@@ -165,13 +167,16 @@ export function MetodosDePagoScreen({
         <p className="mt-8 text-[length:var(--ds-text-sm)] text-neutral-700">
           Tarjeta de crédito
         </p>
-        <div className="mt-2 flex w-full items-center justify-between rounded-[var(--ds-radius-md)] bg-pz-accent px-4 py-2.5 text-white">
+        <button
+          onClick={onCardClick}
+          className="mt-2 flex w-full cursor-pointer items-center justify-between rounded-[var(--ds-radius-md)] bg-pz-accent px-4 py-2.5 text-white transition-colors hover:bg-pz-accent-hover"
+        >
           <span className="flex items-center gap-3 text-[length:var(--ds-text-sm)]">
             <CreditCard className="h-5 w-5" strokeWidth={2} />
             {tarjeta.last4} - {tarjeta.name}
           </span>
           <span aria-hidden>›</span>
-        </div>
+        </button>
         <button
           onClick={onAddCard}
           className="mt-5 flex w-full cursor-pointer items-center gap-3 rounded-[var(--ds-radius-md)] bg-brand-400 px-4 py-2.5 text-[length:var(--ds-text-sm)] text-white transition-colors hover:bg-brand-500"
@@ -179,6 +184,44 @@ export function MetodosDePagoScreen({
           <CreditCard className="h-5 w-5" strokeWidth={2} />
           Agregar método de pago
         </button>
+      </div>
+    </div>
+  );
+}
+
+export function DetalleTarjetaScreen({
+  tarjeta,
+  onBack,
+}: {
+  tarjeta: Tarjeta;
+  onBack: () => void;
+}) {
+  return (
+    <div className="flex h-full flex-col bg-neutral-50">
+      <Header title="Detalle de tarjeta" onBack={onBack} />
+      <div className="flex flex-1 flex-col overflow-y-auto px-6 pb-8 pt-8">
+        <CreditCard className="mx-auto h-12 w-12 text-brand-800" strokeWidth={1.8} />
+        <h2 className="mt-4 text-center text-[length:var(--ds-text-base)] font-semibold text-brand-800">
+          Tarjeta de crédito
+        </h2>
+        <div className="mt-8 flex flex-col gap-4">
+          <div className="flex items-center gap-10">
+            <span className="w-24 text-[length:var(--ds-text-md)] font-bold text-brand-800">
+              Titular
+            </span>
+            <span className="text-[length:var(--ds-text-md)] text-brand-800">
+              {tarjeta.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-10">
+            <span className="w-24 text-[length:var(--ds-text-md)] font-bold text-brand-800">
+              Número
+            </span>
+            <span className="text-[length:var(--ds-text-md)] text-brand-800">
+              •••• •••• •••• {tarjeta.last4}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -16,7 +16,8 @@ export function LogoMark({ className }: { className?: string }) {
         stroke="var(--ds-brand-800)"
         strokeWidth="11"
         strokeLinecap="butt"
-        strokeDasharray="38 12 18 12 38 60"
+        strokeDasharray="49 14"
+        strokeDashoffset="56"
         className="opacity-95"
       />
       <path
