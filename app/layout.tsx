@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ParkZone — Prototipo funcional",
+  title: "ParkZone — App de parquímetros para CDMX",
   description:
-    "Prototipo funcional de ParkZone: una app unificada para gestionar parquímetros en la Ciudad de México. Case study UX de Sareli Santiago García.",
+    "ParkZone: una app unificada para gestionar parquímetros en la Ciudad de México, de la investigación UX al código. Diseñada y programada por Sareli Santiago García.",
 };
 
 export default function RootLayout({

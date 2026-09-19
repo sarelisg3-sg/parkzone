@@ -9,7 +9,7 @@ export default function Home() {
       </PhoneFrame>
       <p className="text-center text-sm text-neutral-400">
         <span className="font-semibold text-neutral-200">ParkZone</span> —
-        prototipo funcional · UX case study de Sareli Santiago García
+        app funcional · diseñada y programada por Sareli Santiago García
       </p>
     </main>
   );

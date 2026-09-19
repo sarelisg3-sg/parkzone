@@ -32,8 +32,8 @@ npm run lint
 npm run build
 ```
 
-## Case study
+## Proyecto completo
 
-El case study completo (proceso, arquitectura de información, evaluación
+El proceso completo (investigación, arquitectura de información, evaluación
 heurística y resultados de las pruebas de usabilidad) está en
-[sarelisantiago.dev](https://sarelisantiago.dev).
+[sarelisantiago.dev/es/projects/parkzone](https://sarelisantiago.dev/es/projects/parkzone).
